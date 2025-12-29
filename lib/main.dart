@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'constants/app_colors.dart';
-import 'screens/main_navigation_screen.dart';
+import 'screens/onboarding/onboarding_screen.dart';
+import 'services/auth_service.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => AuthService(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -15,26 +22,43 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Career App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
+
+      // FORCE DARK THEME HERE
+      themeMode: ThemeMode.dark,
+
+      // Define the Dark Theme explicitly
+      darkTheme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: AppColors.background,
+        scaffoldBackgroundColor:
+            AppColors.background, // This sets the background to #121212
         primaryColor: AppColors.primaryGreen,
+
+        // This ensures all standard text is White
         textTheme:
-            GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme).apply(
-          bodyColor: AppColors.textWhite,
-          displayColor: AppColors.textWhite,
+            GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme).apply(
+          bodyColor: Colors.white,
+          displayColor: Colors.white,
         ),
+
+        // Fix the App Bar color
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.background,
           elevation: 0,
+          iconTheme: IconThemeData(color: Colors.white),
         ),
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primaryGreen,
-          brightness: Brightness.dark,
+
+        // Fix the Color Scheme
+        colorScheme: const ColorScheme.dark(
+          primary: AppColors.primaryGreen,
+          secondary: AppColors.primaryGreen,
+          surface: AppColors.cardBackground,
+          background: AppColors.background,
         ),
+
+        useMaterial3: true,
       ),
-      // Start with the main navigation shell
-      home: const MainNavigationScreen(),
+
+      home: const OnboardingScreen(),
     );
   }
 }

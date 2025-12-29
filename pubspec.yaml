@@ -9,23 +9,27 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  
+  # State Management
+  provider: ^6.1.1
+
+  # UI & Design
   cupertino_icons: ^1.0.2
-  # Core dependencies for your UI
-  google_fonts: ^6.1.0          # For the modern font style
-  percent_indicator: ^4.2.3     # For the circular/linear progress bars
-  smooth_page_indicator: ^1.1.0 # For the onboarding dots
-  flutter_svg: ^2.0.9           # For vector icons (optional if you use SVGs)
+  google_fonts: ^6.1.0
+  percent_indicator: ^4.2.3
+  smooth_page_indicator: ^1.1.0
+  flutter_svg: ^2.0.9
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.0
 
+# The 'flutter' key must appear ONLY ONCE
 flutter:
   uses-material-design: true
 
-  # Ensure you create this folder structure in your project root
-  # even if you don't have images yet, otherwise the app might warn you.
+  # Asset registration
   assets:
     - assets/images/
     - assets/icons/
