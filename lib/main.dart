@@ -14,8 +14,8 @@ void main() {
   );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class AICareerApp extends StatelessWidget {
+  const AICareerApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
