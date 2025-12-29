@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
-import 'screens/onboarding_screen.dart';
-import 'screens/login_screen.dart';
-import 'screens/signup_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'constants/app_colors.dart';
+import 'screens/onboarding/onboarding_screen.dart';
+import 'services/auth_service.dart';
 
 void main() {
-  runApp(const AICareerApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => AuthService(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class AICareerApp extends StatelessWidget {
@@ -13,48 +20,45 @@ class AICareerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AI Career Path',
-      theme: AppTheme.darkTheme,
+      title: 'Career App',
       debugShowCheckedModeBanner: false,
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const OnboardingScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/signup': (context) => const SignUpScreen(),
-      },
-    );
-  }
-}
 
-// ============================================
-// FILE: utils/app_theme.dart
-// ============================================
-class AppTheme {
-  static const Color primaryGreen = Color(0xFF7FFF00);
-  static const Color darkGreen = Color(0xFF1A2F1A);
-  static const Color cardGreen = Color(0xFF2A3F2A);
-  static const Color borderGreen = Color(0xFF3A4A3A);
-  static const Color textGrey = Color(0xFFB0B0B0);
-  static const Color textDarkGrey = Color(0xFF5A6A5A);
-  static const Color textMidGrey = Color(0xFF7A8A7A);
+      // FORCE DARK THEME HERE
+      themeMode: ThemeMode.dark,
 
-  static ThemeData get darkTheme {
-    return ThemeData(
-      primaryColor: primaryGreen,
-      scaffoldBackgroundColor: darkGreen,
-      fontFamily: 'SF Pro Display',
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(
-          fontSize: 32,
-          fontWeight: FontWeight.w700,
-          color: Colors.white,
+      // Define the Dark Theme explicitly
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor:
+            AppColors.background, // This sets the background to #121212
+        primaryColor: AppColors.primaryGreen,
+
+        // This ensures all standard text is White
+        textTheme:
+            GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme).apply(
+          bodyColor: Colors.white,
+          displayColor: Colors.white,
         ),
-        bodyLarge: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-          color: textGrey,
+
+        // Fix the App Bar color
+        appBarTheme: const AppBarTheme(
+          backgroundColor: AppColors.background,
+          elevation: 0,
+          iconTheme: IconThemeData(color: Colors.white),
         ),
+
+        // Fix the Color Scheme
+        colorScheme: const ColorScheme.dark(
+          primary: AppColors.primaryGreen,
+          secondary: AppColors.primaryGreen,
+          surface: AppColors.cardBackground,
+          background: AppColors.background,
+        ),
+
+        useMaterial3: true,
       ),
+
+      home: const OnboardingScreen(),
     );
   }
 }

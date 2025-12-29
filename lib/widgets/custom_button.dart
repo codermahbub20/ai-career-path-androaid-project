@@ -1,67 +1,43 @@
-import 'dart:ui';
-
-import 'package:ai_carrer_path/utils/app_theme.dart';
 import 'package:flutter/material.dart';
+import '../constants/app_colors.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
-  final bool isPrimary;
-  final bool showArrow;
-  final IconData? icon;
+  final Color backgroundColor;
+  final Color textColor;
+  final double? width;
 
   const CustomButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
-    this.isPrimary = true,
-    this.showArrow = false,
-    this.icon,
-  }) : super(key: key);
+    this.backgroundColor = AppColors.primaryGreen,
+    this.textColor = Colors.black,
+    this.width,
+  });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: double.infinity,
-      height: 56,
+      width: width ?? double.infinity,
+      height: 50,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: isPrimary
-              ? AppTheme.primaryGreen
-              : Colors.transparent,
+          backgroundColor: backgroundColor,
+          foregroundColor: textColor,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-            side: isPrimary
-                ? BorderSide.none
-                : const BorderSide(color: AppTheme.borderGreen, width: 1.5),
+            borderRadius: BorderRadius.circular(25),
           ),
           elevation: 0,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, color: isPrimary ? Colors.black : Colors.white),
-              const SizedBox(width: 8),
-            ],
-            Text(
-              text,
-              style: TextStyle(
-                color: isPrimary ? Colors.black : Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            if (showArrow) ...[
-              const SizedBox(width: 8),
-              Icon(
-                Icons.arrow_forward,
-                color: isPrimary ? Colors.black : Colors.white,
-                size: 20,
-              ),
-            ],
-          ],
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
