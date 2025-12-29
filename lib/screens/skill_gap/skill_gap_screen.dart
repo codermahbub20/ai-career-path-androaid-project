@@ -98,9 +98,9 @@ class SkillGapScreen extends StatelessWidget {
           const SizedBox(height: 20),
           const Divider(color: Colors.white10),
           const SizedBox(height: 16),
-          Row(
+          const Row(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               Icon(Icons.auto_awesome, color: AppColors.primaryGreen, size: 20),
               SizedBox(width: 12),
               Expanded(
@@ -204,10 +204,10 @@ class SkillGapScreen extends StatelessWidget {
                     height: 40,
                     color: Colors.white), // Img Placeholder
                 const SizedBox(width: 12),
-                Expanded(
+                const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text('Google Data Analytics',
                           style: TextStyle(fontWeight: FontWeight.bold)),
                       Text('Coursera • 4.8 ★',

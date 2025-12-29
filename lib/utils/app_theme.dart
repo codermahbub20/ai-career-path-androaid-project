@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 class AppTheme {
@@ -30,4 +28,6 @@ class AppTheme {
       ),
     );
   }
+
+  static Color? get cardBackground => null;
 }

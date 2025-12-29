@@ -15,6 +15,8 @@ class CustomButton extends StatelessWidget {
     this.backgroundColor = AppColors.primaryGreen,
     this.textColor = Colors.black,
     this.width,
+    required bool showArrow,
+    required bool isPrimary,
   });
 
   @override

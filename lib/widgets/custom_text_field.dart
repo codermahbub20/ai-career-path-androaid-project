@@ -19,6 +19,7 @@ class CustomTextField extends StatelessWidget {
     this.suffixIcon,
     this.obscureText = false,
     this.keyboardType,
+    required String? Function(value) validator,
   }) : super(key: key);
 
   @override
@@ -63,3 +64,5 @@ class CustomTextField extends StatelessWidget {
     );
   }
 }
+
+class value {}

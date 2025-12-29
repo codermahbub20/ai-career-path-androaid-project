@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:ai_carrer_path/models/onboarding_page_model.dart';
 import 'package:ai_carrer_path/utils/app_theme.dart';
 import 'package:flutter/material.dart';
