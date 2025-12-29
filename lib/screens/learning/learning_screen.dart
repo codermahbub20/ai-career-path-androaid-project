@@ -9,9 +9,9 @@ class LearningScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Learning Hub"),
-        actions: [
-          const CircleAvatar(backgroundColor: Colors.grey, radius: 16),
-          const SizedBox(width: 16)
+        actions: const [
+          CircleAvatar(backgroundColor: Colors.grey, radius: 16),
+          SizedBox(width: 16)
         ],
       ),
       body: SingleChildScrollView(
@@ -50,11 +50,11 @@ class LearningScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 24),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
+                children: [
                   Text("Recommended for You",
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),

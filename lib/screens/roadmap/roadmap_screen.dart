@@ -7,9 +7,9 @@ class RoadmapScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("AI Career Roadmap"), actions: [
-        const Icon(Icons.smart_toy, color: AppColors.primaryGreen),
-        const SizedBox(width: 16)
+      appBar: AppBar(title: const Text("AI Career Roadmap"), actions: const [
+        Icon(Icons.smart_toy, color: AppColors.primaryGreen),
+        SizedBox(width: 16)
       ]),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -71,9 +71,9 @@ class RoadmapScreen extends StatelessWidget {
                 border: Border.all(color: AppColors.primaryGreen),
                 borderRadius: BorderRadius.circular(30),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(Icons.refresh, color: AppColors.primaryGreen),
                   SizedBox(width: 8),
                   Text("Regenerate Roadmap",
@@ -126,9 +126,9 @@ class RoadmapScreen extends StatelessWidget {
                         backgroundColor: AppColors.primaryGreen,
                         foregroundColor: Colors.black,
                         minimumSize: const Size(double.infinity, 50)),
-                    child: Row(
+                    child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
+                      children: [
                         Icon(Icons.download),
                         SizedBox(width: 8),
                         Text("Download PDF")

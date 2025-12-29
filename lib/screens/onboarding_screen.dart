@@ -98,6 +98,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     Navigator.pushNamed(context, '/signup');
                   }
                 },
+                isPrimary: true,
               ),
             ),
 
@@ -109,6 +110,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   text: 'Login',
                   isPrimary: false,
                   onPressed: () => Navigator.pushNamed(context, '/login'),
+                  showArrow: false,
                 ),
               )
             else

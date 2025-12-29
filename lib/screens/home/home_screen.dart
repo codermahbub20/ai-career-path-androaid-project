@@ -10,17 +10,17 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
+        title: const Row(
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               // Replace with actual user image asset
               backgroundColor: Colors.grey,
               child: Icon(Icons.person),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text('Good Morning,',
                     style: TextStyle(fontSize: 14, color: AppColors.textGrey)),
                 Text('Sarah Jenkins',
@@ -68,10 +68,10 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Career Roadmap',
+              Text('Career Roadmap',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               Icon(Icons.auto_awesome, color: AppColors.primaryGreen),
             ],
@@ -80,9 +80,9 @@ class HomeScreen extends StatelessWidget {
           const Text('AI-driven path to your dream job',
               style: TextStyle(color: AppColors.textGrey)),
           const SizedBox(height: 20),
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
+            children: [
               Text('Current Progress',
                   style: TextStyle(color: AppColors.textGrey)),
               Text('65% Ready',
@@ -101,7 +101,7 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 20),
           CustomButton(
             text: 'Generate Roadmap',
-            onPressed: () {},
+            onPressed: () {}, showArrow: true, isPrimary: true,
             // Add an icon to the button if needed
           ),
         ],

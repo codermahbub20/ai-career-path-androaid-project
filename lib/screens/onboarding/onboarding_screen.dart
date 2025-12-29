@@ -91,6 +91,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           curve: Curves.easeIn);
                     }
                   },
+                  showArrow: false,
+                  isPrimary: true,
                 ),
                 if (!onLastPage)
                   TextButton(
