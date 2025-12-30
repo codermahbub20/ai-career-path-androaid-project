@@ -1,5 +1,12 @@
+import 'dart:io';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:collection/collection.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+
 import '../../constants/app_colors.dart';
 import '../../services/auth_service.dart';
 import '../../services/user_service.dart';
@@ -34,7 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final String? token = authService.token;
       final String? email = authService.userData?['email'];
 
-      if (token == null || email == null) {
+      if (token == null || email == null || email.isEmpty) {
         throw Exception('Please login again');
       }
 
@@ -57,6 +64,80 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  // PROFILE PICTURE UPLOAD
+  Future<void> _pickAndUploadImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1024,
+      maxHeight: 1024,
+    );
+
+    if (pickedFile == null) return;
+
+    final auth = Provider.of<AuthService>(context, listen: false);
+    final token = auth.token;
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Authentication required')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      var request = http.MultipartRequest(
+        'PATCH',
+        Uri.parse('http://localhost:5000/api/users/${_userData!.id}'),
+      );
+
+      request.headers['Authorization'] = 'Bearer $token';
+
+      request.files.add(await http.MultipartFile.fromPath(
+        'profilePic', // Must match backend exactly
+        pickedFile.path,
+        filename: pickedFile.name,
+      ));
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print('Upload Status: ${response.statusCode}');
+      print('Upload Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
+        final userJson =
+            jsonResponse['data'] ?? jsonResponse['user'] ?? jsonResponse;
+
+        final updatedUser =
+            UserModel.fromJson(userJson as Map<String, dynamic>);
+
+        setState(() {
+          _userData = updatedUser;
+          _isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile picture updated successfully!'),
+            backgroundColor: AppColors.primaryGreen,
+          ),
+        );
+      } else {
+        throw Exception('Server error: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Upload failed: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   void _openEditProfile() {
     if (_userData == null) return;
 
@@ -67,11 +148,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (_) => EditProfileModal(
         user: _userData!,
         onUpdated: (updatedUser) {
-          setState(() {
-            _userData = updatedUser;
-          });
+          setState(() => _userData = updatedUser);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profile updated successfully!')),
+            const SnackBar(
+              content: Text('Profile updated successfully!'),
+              backgroundColor: AppColors.primaryGreen,
+            ),
           );
         },
       ),
@@ -91,8 +173,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await Provider.of<AuthService>(context, listen: false).logout();
-              Navigator.pushNamedAndRemoveUntil(
-                  context, '/login', (_) => false);
+              if (mounted) {
+                Navigator.pushNamedAndRemoveUntil(
+                    context, '/login', (_) => false);
+              }
             },
           ),
         ],
@@ -102,20 +186,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: CircularProgressIndicator(color: AppColors.primaryGreen))
           : _error != null
               ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline,
-                          size: 80, color: Colors.red),
-                      const SizedBox(height: 16),
-                      Text(_error!,
-                          style: const TextStyle(
-                              color: Colors.white, fontSize: 16),
-                          textAlign: TextAlign.center),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                          onPressed: _loadUserData, child: const Text('Retry')),
-                    ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline,
+                            size: 80, color: Colors.red),
+                        const SizedBox(height: 16),
+                        Text(_error!,
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 16),
+                            textAlign: TextAlign.center),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: _loadUserData,
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryGreen),
+                          child: const Text('Retry',
+                              style: TextStyle(color: Colors.black)),
+                        ),
+                      ],
+                    ),
                   ),
                 )
               : RefreshIndicator(
@@ -126,89 +218,115 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       children: [
-                        // Avatar
-                        CircleAvatar(
-                          radius: 60,
-                          backgroundColor:
-                              AppColors.primaryGreen.withOpacity(0.2),
-                          backgroundImage: _userData!.profilePic != null
-                              ? NetworkImage(
-                                  'http://localhost:5000${_userData!.profilePic!}')
-                              : null,
-                          child: _userData!.profilePic == null
-                              ? Text(
-                                  _userData!.fullName[0].toUpperCase(),
-                                  style: const TextStyle(
-                                      fontSize: 48,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white),
-                                )
-                              : null,
+                        // Profile Picture with Upload
+                        GestureDetector(
+                          onTap: _pickAndUploadImage,
+                          child: Stack(
+                            alignment: Alignment.bottomRight,
+                            children: [
+                              CircleAvatar(
+                                radius: 70,
+                                backgroundColor:
+                                    AppColors.primaryGreen.withOpacity(0.2),
+                                backgroundImage: _userData!.profilePic !=
+                                            null &&
+                                        _userData!.profilePic!.isNotEmpty
+                                    ? NetworkImage(
+                                        'http://localhost:5000${_userData!.profilePic!}')
+                                    : null,
+                                child: _userData!.profilePic == null ||
+                                        _userData!.profilePic!.isEmpty
+                                    ? Text(
+                                        _userData!.fullName.isNotEmpty
+                                            ? _userData!.fullName[0]
+                                                .toUpperCase()
+                                            : 'U',
+                                        style: const TextStyle(
+                                            fontSize: 60,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white),
+                                      )
+                                    : null,
+                              ),
+                              CircleAvatar(
+                                radius: 24,
+                                backgroundColor: AppColors.primaryGreen,
+                                child: const Icon(Icons.camera_alt,
+                                    color: Colors.black, size: 28),
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 10),
+                        const Text("Tap to change photo",
+                            style: TextStyle(color: Colors.grey, fontSize: 13)),
+                        const SizedBox(height: 20),
+
                         Text(_userData!.fullName,
                             style: const TextStyle(
-                                fontSize: 24,
+                                fontSize: 26,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white)),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 8),
                         Text((_userData!.role ?? 'user').toUpperCase(),
                             style: const TextStyle(
-                                color: AppColors.primaryGreen, fontSize: 14)),
+                                color: AppColors.primaryGreen,
+                                fontSize: 14,
+                                letterSpacing: 1.5)),
                         const SizedBox(height: 30),
 
-                        // Edit Profile Button
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton(
                             onPressed: _openEditProfile,
                             style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              side: const BorderSide(color: Colors.white54),
-                            ),
-                            child: const Text("EDIT PROFILE",
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                side: const BorderSide(color: Colors.white54)),
+                            child: const Text('EDIT PROFILE',
                                 style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold)),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white)),
                           ),
                         ),
                         const SizedBox(height: 30),
 
                         _buildSectionHeader("PERSONAL INFORMATION"),
+                        const SizedBox(height: 12),
                         _buildInfoTile(Icons.email, "Email", _userData!.email),
                         if ((_userData!.educationLevel ?? '').isNotEmpty)
                           _buildInfoTile(Icons.school, "Education",
                               _userData!.educationLevel ?? ''),
-                        if (_userData!.department!.isNotEmpty)
+                        if ((_userData!.department ?? '').isNotEmpty)
                           _buildInfoTile(Icons.business, "Department",
-                              _userData!.department),
-                        if (_userData!.experienceLevel!.isNotEmpty)
+                              _userData!.department ?? ''),
+                        if ((_userData!.experienceLevel ?? '').isNotEmpty)
                           _buildInfoTile(Icons.work, "Experience Level",
-                              _userData!.experienceLevel),
-                        if (_userData!.preferredCareerTrack!.isNotEmpty)
+                              _userData!.experienceLevel ?? ''),
+                        if ((_userData!.preferredCareerTrack ?? '').isNotEmpty)
                           _buildInfoTile(Icons.trending_up, "Career Track",
-                              _userData!.preferredCareerTrack),
+                              _userData!.preferredCareerTrack ?? ''),
 
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 30),
                         _buildSectionHeader("SKILLS"),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            ...(_userData!.skills ?? []).map((skill) => Chip(
-                                  label: Text(skill),
-                                  backgroundColor: Colors.white10,
-                                  labelStyle:
-                                      const TextStyle(color: Colors.white),
-                                )),
-                            if (_userData!.skills == null ||
-                                _userData!.skills!.isEmpty)
-                              const Chip(
-                                  label: Text("No skills added"),
-                                  backgroundColor: Colors.grey),
-                          ],
-                        ),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 12),
+                        _userData!.skills == null || _userData!.skills!.isEmpty
+                            ? const Text('No skills added yet',
+                                style: TextStyle(color: Colors.grey))
+                            : Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: _userData!.skills!
+                                    .map((skill) => Chip(
+                                          label: Text(skill,
+                                              style: const TextStyle(
+                                                  color: Colors.white)),
+                                          backgroundColor: Colors.white10,
+                                        ))
+                                    .toList(),
+                              ),
+                        const SizedBox(height: 50),
                       ],
                     ),
                   ),
@@ -218,16 +336,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildSectionHeader(String title) {
     return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(title,
-          style: const TextStyle(
-              color: Colors.grey, fontSize: 12, letterSpacing: 1.2)),
-    );
+        alignment: Alignment.centerLeft,
+        child: Text(title,
+            style: const TextStyle(
+                color: Colors.grey, fontSize: 12, letterSpacing: 1.2)));
   }
 
   Widget _buildInfoTile(IconData icon, String label, String value) {
     return Container(
-      width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -235,17 +351,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
           borderRadius: BorderRadius.circular(12)),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.primaryGreen, size: 24),
+          Icon(icon, color: AppColors.primaryGreen, size: 26),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label,
-                  style: TextStyle(color: Colors.grey[400], fontSize: 12)),
-              const SizedBox(height: 4),
-              Text(value,
-                  style: const TextStyle(color: Colors.white, fontSize: 16)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                const SizedBox(height: 4),
+                Text(value,
+                    style: const TextStyle(color: Colors.white, fontSize: 16)),
+              ],
+            ),
           ),
         ],
       ),
@@ -253,8 +371,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-// ===================== EDIT PROFILE MODAL =====================
-
+// ===================== EDIT PROFILE MODAL (UNCHANGED) =====================
 class EditProfileModal extends StatefulWidget {
   final UserModel user;
   final Function(UserModel) onUpdated;
@@ -304,8 +421,8 @@ class _EditProfileModalState extends State<EditProfileModal> {
   void initState() {
     super.initState();
     _nameCtrl = TextEditingController(text: widget.user.fullName);
-    _eduCtrl = TextEditingController(text: widget.user.educationLevel);
-    _deptCtrl = TextEditingController(text: widget.user.department);
+    _eduCtrl = TextEditingController(text: widget.user.educationLevel ?? '');
+    _deptCtrl = TextEditingController(text: widget.user.department ?? '');
     _expDescCtrl =
         TextEditingController(text: widget.user.experienceDescription ?? '');
     _expLevel = widget.user.experienceLevel;
@@ -333,9 +450,9 @@ class _EditProfileModalState extends State<EditProfileModal> {
 
     if (_nameCtrl.text.trim() != widget.user.fullName)
       updates['fullName'] = _nameCtrl.text.trim();
-    if (_eduCtrl.text.trim() != widget.user.educationLevel)
+    if (_eduCtrl.text.trim() != (widget.user.educationLevel ?? ''))
       updates['educationLevel'] = _eduCtrl.text.trim();
-    if (_deptCtrl.text.trim() != widget.user.department)
+    if (_deptCtrl.text.trim() != (widget.user.department ?? ''))
       updates['department'] = _deptCtrl.text.trim();
     if (_expLevel != widget.user.experienceLevel)
       updates['experienceLevel'] = _expLevel;
@@ -343,7 +460,11 @@ class _EditProfileModalState extends State<EditProfileModal> {
       updates['preferredCareerTrack'] = _careerTrack;
     if (_expDescCtrl.text.trim() != (widget.user.experienceDescription ?? ''))
       updates['experienceDescription'] = _expDescCtrl.text.trim();
-    if (_skills != widget.user.skills) updates['skills'] = _skills;
+
+    final originalSkills = widget.user.skills ?? [];
+    if (!const DeepCollectionEquality().equals(_skills, originalSkills)) {
+      updates['skills'] = _skills;
+    }
 
     if (updates.isEmpty) {
       Navigator.pop(context);
@@ -361,8 +482,10 @@ class _EditProfileModalState extends State<EditProfileModal> {
       widget.onUpdated(updatedUser);
       Navigator.pop(context);
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Failed to update: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Update failed: $e'), backgroundColor: Colors.red),
+      );
     }
   }
 
@@ -376,7 +499,6 @@ class _EditProfileModalState extends State<EditProfileModal> {
       ),
       child: Column(
         children: [
-          // Header
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
@@ -394,8 +516,6 @@ class _EditProfileModalState extends State<EditProfileModal> {
             ),
           ),
           const Divider(color: Colors.grey),
-
-          // Form
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -418,13 +538,10 @@ class _EditProfileModalState extends State<EditProfileModal> {
                           const InputDecoration(labelText: "Department"),
                       style: const TextStyle(color: Colors.white)),
                   const SizedBox(height: 16),
-
                   DropdownButtonFormField<String>(
                     value: _expLevel,
-                    decoration: const InputDecoration(
-                        labelText: "Experience Level",
-                        filled: true,
-                        fillColor: Colors.grey),
+                    decoration:
+                        const InputDecoration(labelText: "Experience Level"),
                     dropdownColor: Colors.grey[800],
                     style: const TextStyle(color: Colors.white),
                     items: expLevels
@@ -433,13 +550,10 @@ class _EditProfileModalState extends State<EditProfileModal> {
                     onChanged: (v) => setState(() => _expLevel = v),
                   ),
                   const SizedBox(height: 16),
-
                   DropdownButtonFormField<String>(
                     value: _careerTrack,
                     decoration: const InputDecoration(
-                        labelText: "Preferred Career Track",
-                        filled: true,
-                        fillColor: Colors.grey),
+                        labelText: "Preferred Career Track"),
                     dropdownColor: Colors.grey[800],
                     style: const TextStyle(color: Colors.white),
                     items: careerTracks
@@ -448,31 +562,27 @@ class _EditProfileModalState extends State<EditProfileModal> {
                     onChanged: (v) => setState(() => _careerTrack = v),
                   ),
                   const SizedBox(height: 16),
-
                   TextField(
-                    controller: _expDescCtrl,
-                    maxLines: 4,
-                    decoration: const InputDecoration(
-                        labelText: "Experience Description"),
-                    style: const TextStyle(color: Colors.white),
-                  ),
+                      controller: _expDescCtrl,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                          labelText: "Experience Description"),
+                      style: const TextStyle(color: Colors.white)),
                   const SizedBox(height: 24),
-
-                  // Skills Input
                   Row(
                     children: [
                       Expanded(
                         child: TextField(
                           controller: _skillInputCtrl,
                           decoration: const InputDecoration(
-                              hintText: "Type a skill",
+                              hintText: "Add a skill",
                               hintStyle: TextStyle(color: Colors.grey)),
                           style: const TextStyle(color: Colors.white),
                         ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.add_circle,
-                            color: AppColors.primaryGreen),
+                            color: AppColors.primaryGreen, size: 40),
                         onPressed: () {
                           final skill = _skillInputCtrl.text.trim();
                           if (skill.isNotEmpty && !_skills.contains(skill)) {
@@ -492,24 +602,21 @@ class _EditProfileModalState extends State<EditProfileModal> {
                     children: _skills
                         .map((skill) => Chip(
                               label: Text(skill),
-                              onDeleted: () =>
-                                  setState(() => _skills.remove(skill)),
                               backgroundColor:
                                   AppColors.primaryGreen.withOpacity(0.3),
+                              onDeleted: () =>
+                                  setState(() => _skills.remove(skill)),
                             ))
                         .toList(),
                   ),
                   const SizedBox(height: 40),
-
-                  // Save Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _saveChanges,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryGreen,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
+                          backgroundColor: AppColors.primaryGreen,
+                          padding: const EdgeInsets.symmetric(vertical: 18)),
                       child: const Text("SAVE CHANGES",
                           style: TextStyle(
                               color: Colors.black,
@@ -517,6 +624,7 @@ class _EditProfileModalState extends State<EditProfileModal> {
                               fontSize: 16)),
                     ),
                   ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
