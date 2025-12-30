@@ -1,0 +1,21 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.userRoutes = void 0;
+const express_1 = __importDefault(require("express"));
+const user_controller_1 = require("./user.controller");
+const upload_1 = require("../../middlewares/upload");
+const validateRequest_1 = __importDefault(require("../../middlewares/validateRequest"));
+const user_validation_1 = require("./user.validation");
+const router = express_1.default.Router();
+// Get all users (admin only)
+router.get('/', user_controller_1.UserController.getAllUsers);
+// Get single user (admin only)
+router.get('/:userId', user_controller_1.UserController.getSingleUser);
+// // Update user (admin only)
+router.patch('/:userId', (0, validateRequest_1.default)(user_validation_1.UserValidation.updateUserValidationSchema), upload_1.upload.single("profilePic"), user_controller_1.UserController.updateUser);
+// // Delete user (admin only)
+// router.delete('/:userId', auth('admin'), UserController.deleteUser);
+exports.userRoutes = router;

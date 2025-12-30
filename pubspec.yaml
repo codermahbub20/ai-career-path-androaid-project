@@ -9,9 +9,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  
+
   # State Management
   provider: ^6.1.1
+
+  # Image Picker for Profile Picture Upload
+  image_picker: ^1.0.7
 
   # UI & Design
   cupertino_icons: ^1.0.2
@@ -20,19 +23,25 @@ dependencies:
   smooth_page_indicator: ^1.1.0
   flutter_svg: ^2.0.9
 
-  # Add this line for SharedPreferences
+  # Local Storage
   shared_preferences: ^2.2.2
+
+  # HTTP requests
+  http: ^1.2.1
+
+  # For deep equality in skills comparison
+  collection: ^1.18.0
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
+  flutter_lints: ^3.0.0
 
-# The 'flutter' key must appear ONLY ONCE
 flutter:
   uses-material-design: true
 
-  # Asset registration
+  # Assets Section - REQUIRED even if empty
   assets:
     - assets/images/
     - assets/icons/
